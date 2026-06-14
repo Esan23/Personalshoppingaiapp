@@ -76,7 +76,7 @@ export default function SolutionSection() {
             {/* UVP callout */}
             <div className="surface-gradient relative mt-4 overflow-hidden rounded-2xl p-6 text-center text-white shadow-lg">
               <p className="text-lg font-medium leading-snug">
-                Unlike a search box, Shortlist doesn't show you more — it decides
+                Unlike a search box, Trine doesn't show you more — it decides
                 with you, and tells you why.
               </p>
             </div>

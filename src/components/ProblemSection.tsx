@@ -72,7 +72,7 @@ export default function ProblemSection() {
           </div>
           <p className="mt-4 text-center text-xs text-muted">
             Category research on choice overload — context for the problem, not
-            claims about Shortlist.
+            claims about Trine.
           </p>
         </SectionReveal>
       </div>

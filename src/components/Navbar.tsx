@@ -42,10 +42,10 @@ export default function Navbar({ theme, onToggleTheme }: NavbarProps) {
         aria-label="Primary"
         className="container-shortlist flex h-[60px] items-center justify-between lg:h-[72px]"
       >
-        <a href="#top" className="flex items-center gap-2.5" aria-label="Shortlist home">
+        <a href="#top" className="flex items-center gap-2.5" aria-label="Trine home">
           <Logo className="h-8 w-8" />
           <span className="font-display text-2xl tracking-tight text-ink dark:text-white">
-            Shortlist
+            Trine
           </span>
         </a>
 
@@ -107,7 +107,7 @@ export default function Navbar({ theme, onToggleTheme }: NavbarProps) {
                 <div className="flex items-center gap-2">
                   <Logo className="h-7 w-7" />
                   <span className="font-display text-xl text-ink dark:text-white">
-                    Shortlist
+                    Trine
                   </span>
                 </div>
                 <button

@@ -1,8 +1,14 @@
-# Shortlist — Landing Page
+# Trine — Landing Page
 
-Front-end marketing landing page for **Shortlist**, an AI shopping-decision app
-that turns an overwhelming field of options into three confident, reasoned
-choices. Built to the Shortlist Landing Page PRD and Brand Design System.
+Front-end marketing landing page for **Trine** (*your AI shopping shortlist*),
+an AI shopping-decision app that turns an overwhelming field of options into
+three confident, reasoned choices. Built to the Landing Page PRD and Brand
+Design System (see [`docs/`](docs/)).
+
+> **Naming:** "Shortlist" was the working placeholder; **Trine** is the chosen
+> brand (see [`docs/Shortlist-Naming-Analysis.md`](docs/Shortlist-Naming-Analysis.md)).
+> Per that analysis, "shortlist" is kept as a lowercase *feature word* (the
+> three-option list), while "Trine" is the product name.
 
 ## Stack
 
@@ -60,7 +66,7 @@ then in Netlify: *Add new site → Import an existing project*. The settings in
   are **illustrative placeholders** and labeled as such in the UI — replace with
   verified data before a real launch (PRD §10).
 - Choice-overload statistics (Baymard, Meta, Columbia) are real, sourced
-  *category* research — framed as context, never as Shortlist's own results.
+  *category* research — framed as context, never as Trine's own results.
 - The sign-up modal is front-end only; wire its submit handler in
   `src/components/SignUpModal.tsx` to a real auth provider / email service.
 - The demo-video poster uses a branded in-app mockup

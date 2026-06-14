@@ -128,7 +128,7 @@ export default function TimeReclaimedCalculator() {
                 format={(v) => `$${v}`}
               />
               <p className="text-xs text-muted">
-                Illustrative estimate. Assumes Shortlist saves ~70% of the time
+                Illustrative estimate. Assumes Trine saves ~70% of the time
                 you'd spend deciding on your own.
               </p>
             </div>

@@ -135,7 +135,7 @@ export default function SignUpModal() {
                   <div className="flex items-center gap-2.5">
                     <Logo className="h-8 w-8" />
                     <span className="font-display text-2xl text-ink dark:text-white">
-                      Shortlist
+                      Trine
                     </span>
                   </div>
                   <h2

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
-const STORAGE_KEY = "shortlist-theme";
+const STORAGE_KEY = "trine-theme";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";

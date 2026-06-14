@@ -11,10 +11,13 @@ export default function Footer() {
             <div className="flex items-center gap-2.5">
               <Logo className="h-8 w-8" />
               <span className="font-display text-2xl text-ink dark:text-white">
-                Shortlist
+                Trine
               </span>
             </div>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
+            <p className="mt-2 text-sm font-medium text-muted">
+              Your AI shopping shortlist.
+            </p>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">
               A decision, handled — so your attention goes to the things that
               actually matter.
             </p>
@@ -55,7 +58,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 text-sm text-muted dark:border-white/10 sm:flex-row">
-          <p>© {new Date().getFullYear()} Shortlist. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Trine. All rights reserved.</p>
           <p className="text-xs">
             Made for everyone with too many tabs open.
           </p>

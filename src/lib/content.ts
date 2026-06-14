@@ -6,7 +6,7 @@
  * is an ILLUSTRATIVE PLACEHOLDER pending verified data. The choice-overload
  * statistics in the Problem section are real, externally sourced category
  * research (Baymard, Meta, Columbia) and are framed as context — never as
- * Shortlist's own results.
+ * Trine's own results.
  */
 
 export const NAV_LINKS = [
