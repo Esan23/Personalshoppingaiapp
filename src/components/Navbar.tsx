@@ -1,0 +1,148 @@
+import { useEffect, useState } from "react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { AnimatePresence, motion } from "framer-motion";
+import Button from "./ui/Button";
+import ThemeToggle from "./ThemeToggle";
+import Logo from "./Logo";
+import { NAV_LINKS } from "../lib/content";
+
+interface NavbarProps {
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
+}
+
+export default function Navbar({ theme, onToggleTheme }: NavbarProps) {
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Lock body scroll while the mobile drawer is open
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  return (
+    <header
+      className={`fixed inset-x-0 top-0 z-[1000] transition-all duration-300 ease-brand ${
+        scrolled
+          ? "border-b border-slate-200/70 bg-white/80 backdrop-blur-md dark:border-white/10 dark:bg-[#0B1020]/80"
+          : "border-b border-transparent bg-transparent"
+      }`}
+    >
+      <nav
+        aria-label="Primary"
+        className="container-shortlist flex h-[60px] items-center justify-between lg:h-[72px]"
+      >
+        <a href="#top" className="flex items-center gap-2.5" aria-label="Shortlist home">
+          <Logo className="h-8 w-8" />
+          <span className="font-display text-2xl tracking-tight text-ink dark:text-white">
+            Shortlist
+          </span>
+        </a>
+
+        {/* Desktop links */}
+        <ul className="hidden items-center gap-8 lg:flex">
+          {NAV_LINKS.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                className="text-sm font-medium text-muted transition hover:text-ink dark:text-slate-300 dark:hover:text-white"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <div className="hidden items-center gap-3 lg:flex">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          <Button href="#start" size="md">
+            Start free
+          </Button>
+        </div>
+
+        {/* Mobile controls */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={open}
+            className="grid h-11 w-11 place-items-center rounded-lg text-ink dark:text-white"
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-[1100] bg-ink/40 backdrop-blur-sm lg:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+            />
+            <motion.div
+              className="fixed right-0 top-0 z-[1200] flex h-full w-[80%] max-w-sm flex-col bg-white p-6 shadow-2xl dark:bg-[#0B1020] lg:hidden"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            >
+              <div className="mb-8 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Logo className="h-7 w-7" />
+                  <span className="font-display text-xl text-ink dark:text-white">
+                    Shortlist
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close menu"
+                  className="grid h-11 w-11 place-items-center rounded-lg text-ink dark:text-white"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <ul className="flex flex-col gap-1">
+                {NAV_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="block rounded-lg px-3 py-3 text-base font-medium text-ink transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/5"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                href="#start"
+                onClick={() => setOpen(false)}
+                className="mt-6 w-full"
+              >
+                Start free
+              </Button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+}
