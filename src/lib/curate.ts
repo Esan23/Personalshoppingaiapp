@@ -90,6 +90,7 @@ function localDemoShortlist(req: CurateRequest, started: number): CurateResponse
   return {
     query: req.query,
     options,
+    source: "demo",
     demoMode: true,
     elapsedMs: Math.round(performance.now() - started),
   };

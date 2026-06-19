@@ -12,10 +12,14 @@ export interface ShortlistOption {
   why: string;
   /** Honest counter-case: who this option is NOT for. */
   notFor: string;
-  /** Where to find/buy it (a search or product URL). */
+  /** Where to find/buy it (a real product page or a search URL). */
   url: string;
-  /** Optional retailer hint, e.g. "Amazon", "Best Buy". */
+  /** Optional retailer label, e.g. "eBay", "Best Buy", "Google Shopping". */
   retailer?: string;
+  /** Optional product thumbnail (present for real retailer listings). */
+  imageUrl?: string;
+  /** Optional average review score (present for real retailer listings). */
+  reviewScore?: number | null;
 }
 
 export interface CurateRequest {
@@ -23,9 +27,16 @@ export interface CurateRequest {
   budgetMax?: number;
 }
 
+/** Where the shortlist came from:
+ *  - "retailers": real listings (eBay/Best Buy) ranked by Claude
+ *  - "ai": Claude-generated representative picks with search links
+ *  - "demo": illustrative placeholder (no API keys configured) */
+export type CurateSource = "retailers" | "ai" | "demo";
+
 export interface CurateResponse {
   query: string;
   options: ShortlistOption[];
+  source: CurateSource;
   /** True when results are illustrative (no live retailer/LLM data). */
   demoMode: boolean;
   /** ms the engine took, surfaced as "decided in N seconds". */

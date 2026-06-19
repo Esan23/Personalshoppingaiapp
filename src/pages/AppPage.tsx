@@ -7,7 +7,7 @@ import ShortlistStack from "../components/app/ShortlistStack";
 import DecisionHistory from "../components/app/DecisionHistory";
 import { curate, saveDecision } from "../lib/curate";
 import { useAuth } from "../lib/auth";
-import type { CurateResponse, ShortlistOption } from "../lib/types";
+import type { CurateResponse, CurateSource, ShortlistOption } from "../lib/types";
 
 type Status = "idle" | "loading" | "done";
 
@@ -86,12 +86,7 @@ export default function AppPage() {
                 </motion.p>
               )}
 
-              {result.demoMode && (
-                <p className="mt-4 text-xs text-muted dark:text-slate-500">
-                  Demo mode — illustrative results. Add an Anthropic API key (and,
-                  later, retailer feeds) for live recommendations.
-                </p>
-              )}
+              <SourceNote source={result.source} />
             </div>
           )}
 
@@ -99,6 +94,32 @@ export default function AppPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+/** Footnote explaining where the shortlist came from. */
+function SourceNote({ source }: { source: CurateSource }) {
+  if (source === "retailers") {
+    return (
+      <p className="mt-4 text-xs text-muted dark:text-slate-500">
+        Live listings from connected retailers, ranked for you. Prices and stock
+        can change — check the retailer before buying.
+      </p>
+    );
+  }
+  if (source === "ai") {
+    return (
+      <p className="mt-4 text-xs text-muted dark:text-slate-500">
+        AI suggestions — representative picks with search links. Connect retailer
+        feeds (eBay / Best Buy) for live listings.
+      </p>
+    );
+  }
+  return (
+    <p className="mt-4 text-xs text-muted dark:text-slate-500">
+      Demo mode — illustrative results. Add an Anthropic API key (and, later,
+      retailer feeds) for live recommendations.
+    </p>
   );
 }
 

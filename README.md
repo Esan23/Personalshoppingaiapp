@@ -35,14 +35,30 @@ Landing Page PRD and Brand Design System (see [`docs/`](docs/)).
 
 1. The user describes what they need in the Natural-Language Query Bar.
 2. The client calls the `/.netlify/functions/curate` function.
-3. That function asks Claude (`claude-sonnet-4-6`, via tool-use) for **exactly
-   three** ranked options, each with a "why it's here / who it's not for".
+3. That function returns **exactly three** ranked options (each with a "why it's
+   here / who it's not for"), using the best tier available:
+   - **`retailers`** — real listings fetched from **eBay Browse + Best Buy**,
+     then ranked by Claude (`claude-sonnet-4-6`, tool-use). Shows real prices,
+     images, review scores, and product links.
+   - **`ai`** — Claude-generated representative picks with Google Shopping search
+     links (when no retailer keys are set).
+   - **`demo`** — illustrative placeholder (when no `ANTHROPIC_API_KEY`).
 4. The Shortlist Stack renders the three with a Confidence Meter; the user picks
    one, and (if signed in) the decision is saved to Supabase.
 
-> Without an `ANTHROPIC_API_KEY`, the function returns an **illustrative demo
-> shortlist** so the experience works everywhere. Without Supabase env vars, the
-> app runs in **guest mode** (the loop works; saved history is disabled).
+> Tiers degrade gracefully: the function always returns three options so the
+> experience works everywhere. Without Supabase env vars, the app runs in
+> **guest mode** (the loop works; saved history is disabled).
+
+### Connecting retailer feeds (optional, enables the `retailers` tier)
+
+Set these in your env / Netlify (server-side only — see [`.env.example`](.env.example)):
+
+| Var | Source |
+|---|---|
+| `EBAY_CLIENT_ID` + `EBAY_CLIENT_SECRET` | [eBay Developers](https://developer.ebay.com) — auto-minted Browse token (preferred) |
+| `EBAY_ACCESS_TOKEN` | A static Browse token (fallback to the above) |
+| `BESTBUY_API_KEY` | [Best Buy Developer](https://developer.bestbuy.com) — free key |
 
 ## Local development
 
