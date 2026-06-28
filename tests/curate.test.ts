@@ -47,7 +47,7 @@ function mockFetch() {
   });
 }
 
-const ENV_KEYS = ["ANTHROPIC_API_KEY", "BESTBUY_API_KEY", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET", "EBAY_ACCESS_TOKEN"];
+const ENV_KEYS = ["ANTHROPIC_API_KEY", "BESTBUY_API_KEY", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET", "EBAY_ACCESS_TOKEN", "FIRECRAWL_API_KEY"];
 
 function call(query = "a quiet office chair under $300", budgetMax: number | undefined = 300) {
   return handler({ httpMethod: "POST", body: JSON.stringify({ query, budgetMax }) });
@@ -141,6 +141,34 @@ describe("curate function", () => {
     // The 3.2-star "Low Rated" product must have been excluded from candidates.
     expect(candidateIds).toContain("bestbuy-1");
     expect(candidateIds).not.toContain("bestbuy-2");
+  });
+
+  it("retailers tier: includes Firecrawl-scraped products", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    process.env.FIRECRAWL_API_KEY = "fc-test";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, opts?: { body?: string }) => {
+        url = String(url);
+        if (url.includes("api.firecrawl.dev")) {
+          return { ok: true, json: async () => ({ success: true, data: { json: { products: [
+            { title: "Vintage Designer Bag", price: 220, imageUrl: "http://i/bag", productUrl: "http://amzn/bag", rating: 4.4, reviewCount: 30, brand: "BrandX" },
+          ] } } }) };
+        }
+        // anthropic — pick the first candidate three times
+        const userText = JSON.parse(opts!.body!).messages[0].content;
+        const ids = [...String(userText).matchAll(/"id":\s*"([^"]+)"/g)].map((m) => m[1]);
+        return { ok: true, json: async () => ({ content: [{ type: "tool_use", input: { picks: [
+          { id: ids[0], rank: 1, match: 90, why: "w", notFor: "n" },
+          { id: ids[0], rank: 2, match: 80, why: "w", notFor: "n" },
+          { id: ids[0], rank: 3, match: 70, why: "w", notFor: "n" },
+        ] } }] }) };
+      })
+    );
+    const b = await parse(await handler({ httpMethod: "POST", body: JSON.stringify({ query: "designer bag" }) }));
+    expect(b.source).toBe("retailers");
+    expect(b.options[0].retailer).toBe("Amazon");
+    expect(b.options[0].name).toBe("Vintage Designer Bag");
   });
 
   it("retailers tier falls back to demo if Anthropic call fails", async () => {

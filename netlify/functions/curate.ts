@@ -19,7 +19,7 @@ const MODEL = "claude-sonnet-4-6";
 
 interface Product {
   id: string;
-  retailer: "eBay" | "Best Buy";
+  retailer: "eBay" | "Best Buy" | "Amazon" | "The RealReal" | "Nordstrom";
   title: string;
   price: number;
   imageUrl: string;
@@ -138,6 +138,17 @@ async function fetchCandidates(
   const bestBuyKey = process.env.BESTBUY_API_KEY;
   if (bestBuyKey) jobs.push(fetchBestBuy(query, budgetMax, bestBuyKey));
 
+  // Sites with no usable product API are scraped via Firecrawl. Scraping is
+  // slow + billed, so each is hard-capped (so it can never stall the response)
+  // and relies on Firecrawl's cache for fast, free repeat queries.
+  const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+  if (firecrawlKey) {
+    const cap = Number(process.env.SCRAPE_TIMEOUT_MS) || 8000;
+    jobs.push(withTimeout(fetchAmazon(query, budgetMax, firecrawlKey), cap, []));
+    jobs.push(withTimeout(fetchRealReal(query, budgetMax, firecrawlKey), cap, []));
+    jobs.push(withTimeout(fetchNordstrom(query, budgetMax, firecrawlKey), cap, []));
+  }
+
   if (jobs.length === 0) return [];
 
   const settled = await Promise.allSettled(jobs);
@@ -216,13 +227,13 @@ async function fetchEbay(query: string, budgetMax: number | undefined, token: st
 }
 
 /**
- * Reduce a natural-language query to its meaningful product words for Best Buy's
- * keyword search. Best Buy treats a multi-word `search=` term as an OR across
- * words, so a raw sentence ("a decent rain jacket … under $80, I don't want to
- * think about it") would match on filler words and return noise. We strip prices,
- * ages, and stop-words so recall stays on the actual product nouns.
+ * Reduce a natural-language query to its meaningful product words for any
+ * retailer's keyword search (Best Buy, Amazon, Nordstrom, The RealReal…). A raw
+ * sentence ("a decent rain jacket … under $80, I don't want to think about it")
+ * would match on filler words and return noise, so we strip prices, ages, and
+ * stop-words and keep the actual product nouns.
  */
-function bestBuyKeywords(query: string): string {
+function searchKeywords(query: string): string {
   const stop = new Set([
     "a","an","the","for","my","me","i","im","need","needs","want","wants","looking",
     "look","some","that","this","with","to","of","and","or","is","it","its","under",
@@ -250,7 +261,7 @@ async function fetchBestBuy(query: string, budgetMax: number | undefined, apiKey
     "sku,name,salePrice,regularPrice,image,largeImage,thumbnailImage,url,addToCartUrl,customerReviewAverage,customerReviewCount,manufacturer,onlineAvailability";
   // Filters live INSIDE the parentheses and are AND-combined: keyword match,
   // buyable online, and within budget when one is given.
-  const filters = [`search=${encodeURIComponent(bestBuyKeywords(query))}`, "onlineAvailability=true"];
+  const filters = [`search=${encodeURIComponent(searchKeywords(query))}`, "onlineAvailability=true"];
   if (budgetMax) filters.push(`salePrice<=${budgetMax}`);
   const params = new URLSearchParams({ format: "json", apiKey, pageSize: "25", show: fields });
   const res = await fetch(`https://api.bestbuy.com/v1/products(${filters.join("&")})?${params}`);
@@ -270,6 +281,123 @@ async function fetchBestBuy(query: string, budgetMax: number | undefined, apiKey
       brand: p.manufacturer ?? null,
     })
   );
+}
+
+// ── Firecrawl scrapers (Amazon, The RealReal, Nordstrom) ──────────────────
+//
+// These three retailers have no usable free product-search API, so we extract
+// their search-results pages with Firecrawl's structured-JSON scrape. All three
+// share one credential (FIRECRAWL_API_KEY) and one schema; each adapter only
+// builds the site's search URL and maps the rows.
+
+const FIRECRAWL_SCRAPE = "https://api.firecrawl.dev/v2/scrape";
+
+interface ScrapedProduct {
+  title?: string;
+  price?: number;
+  imageUrl?: string;
+  productUrl?: string;
+  rating?: number;
+  reviewCount?: number;
+  brand?: string;
+}
+
+/** Resolve `p`, but give up and resolve to `fallback` after `ms` so a slow
+ *  scrape can never blow the serverless function's overall time budget. */
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    p.catch(() => fallback),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
+/** Scrape a search-results page and extract product rows via Firecrawl JSON. */
+async function scrapeProducts(searchUrl: string, fcKey: string): Promise<ScrapedProduct[]> {
+  const res = await fetch(FIRECRAWL_SCRAPE, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${fcKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url: searchUrl,
+      onlyMainContent: true,
+      proxy: "auto", // auto-escalates to anti-bot proxies when a site needs it
+      maxAge: 86_400_000, // accept a ≤1-day-old cached page (faster + no re-bill)
+      timeout: 25_000,
+      location: { country: "US", languages: ["en-US"] },
+      formats: [
+        {
+          type: "json",
+          prompt:
+            "Extract the product listings on this shopping search-results page. " +
+            "Return up to 20 real, purchasable products. For each: title, numeric " +
+            "price in USD (no symbols), absolute image URL, absolute product URL, " +
+            "average star rating (0-5) if shown, review count if shown, and brand if " +
+            "shown. Skip ads, sponsored placeholders, and items without a price.",
+          schema: {
+            type: "object",
+            properties: {
+              products: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    price: { type: "number" },
+                    imageUrl: { type: "string" },
+                    productUrl: { type: "string" },
+                    rating: { type: "number" },
+                    reviewCount: { type: "number" },
+                    brand: { type: "string" },
+                  },
+                  required: ["title", "price", "productUrl"],
+                },
+              },
+            },
+            required: ["products"],
+          },
+        },
+      ],
+    }),
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  const rows = data?.data?.json?.products;
+  return Array.isArray(rows) ? rows : [];
+}
+
+/** Map scraped rows to Trine's Product shape for a given retailer. */
+function toProducts(rows: ScrapedProduct[], retailer: Product["retailer"]): Product[] {
+  const slug = retailer.toLowerCase().replace(/\s+/g, "-");
+  return rows
+    .filter((r) => r.title && r.productUrl && typeof r.price === "number")
+    .map((r, i) => ({
+      id: `${slug}-${i}`,
+      retailer,
+      title: r.title!,
+      price: r.price!,
+      imageUrl: r.imageUrl ?? "",
+      productUrl: r.productUrl!,
+      reviewScore: typeof r.rating === "number" ? r.rating : null,
+      reviewCount: typeof r.reviewCount === "number" ? r.reviewCount : null,
+      brand: r.brand ?? null,
+    }));
+}
+
+function fetchAmazon(query: string, budgetMax: number | undefined, fcKey: string): Promise<Product[]> {
+  const params = new URLSearchParams({ k: searchKeywords(query) });
+  if (budgetMax) params.set("high-price", String(budgetMax)); // Amazon /s price ceiling
+  return scrapeProducts(`https://www.amazon.com/s?${params}`, fcKey).then((r) => toProducts(r, "Amazon"));
+}
+
+function fetchRealReal(query: string, _budgetMax: number | undefined, fcKey: string): Promise<Product[]> {
+  const params = new URLSearchParams({ keywords: searchKeywords(query) });
+  return scrapeProducts(`https://www.therealreal.com/products?${params}`, fcKey).then((r) =>
+    toProducts(r, "The RealReal")
+  );
+}
+
+function fetchNordstrom(query: string, _budgetMax: number | undefined, fcKey: string): Promise<Product[]> {
+  const params = new URLSearchParams({ keyword: searchKeywords(query) });
+  return scrapeProducts(`https://www.nordstrom.com/sr?${params}`, fcKey).then((r) => toProducts(r, "Nordstrom"));
 }
 
 // ── Claude: rank real products ───────────────────────────────────────────
