@@ -430,7 +430,8 @@ Rules:
 - Rank 1 = the safest low-regret pick for most people; then a value option and a premium option.
 - Each option needs a one-sentence "why" and an honest "who it's NOT for".
 - "price" is a realistic estimate (e.g. "~$70"); stay at or under any stated budget.${budgetLine}${prefsLine(preferences)}
-- "url" must be a Google Shopping search URL: https://www.google.com/search?tbm=shop&q=<url-encoded query>
+- "name" must be a specific, real product: include the brand and model (e.g. "Steelcase Series 1", not "ergonomic office chair").
+- "url" must be a Google Shopping search for THAT EXACT product, built from its name: https://www.google.com/search?tbm=shop&q=<url-encoded "name"> — so each of the three links lands on a different, specific item, never the same generic search.
 - "match" is a 0–100 confidence score; keep them distinct and honest.
 - Voice: plain, economical, reassuring. No hype, no exclamation points.`;
 
@@ -469,7 +470,18 @@ Rules:
   });
 
   const options = (data?.options ?? []) as ShortlistOption[];
-  return options.slice(0, 3).sort((a, b) => a.rank - b.rank);
+  // Force each link to a Shopping search for that exact product name, so the
+  // three cards never collapse to the same generic search (regardless of what
+  // the model returned in "url").
+  return options
+    .slice(0, 3)
+    .sort((a, b) => a.rank - b.rank)
+    .map((o) => ({
+      ...o,
+      url: o.name
+        ? `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(o.name)}`
+        : o.url,
+    }));
 }
 
 // ── Anthropic call (shared) ──────────────────────────────────────────────
