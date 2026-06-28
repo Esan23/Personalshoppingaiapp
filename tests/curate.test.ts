@@ -47,7 +47,7 @@ function mockFetch() {
   });
 }
 
-const ENV_KEYS = ["ANTHROPIC_API_KEY", "BESTBUY_API_KEY", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET", "EBAY_ACCESS_TOKEN", "FIRECRAWL_API_KEY"];
+const ENV_KEYS = ["ANTHROPIC_API_KEY", "BESTBUY_API_KEY", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET", "EBAY_ACCESS_TOKEN", "FIRECRAWL_API_KEY", "VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"];
 
 function call(query = "a quiet office chair under $300", budgetMax: number | undefined = 300) {
   return handler({ httpMethod: "POST", body: JSON.stringify({ query, budgetMax }) });
@@ -143,17 +143,20 @@ describe("curate function", () => {
     expect(candidateIds).not.toContain("bestbuy-2");
   });
 
-  it("retailers tier: includes Firecrawl-scraped products", async () => {
+  it("retailers tier: serves cached scraped products", async () => {
     process.env.ANTHROPIC_API_KEY = "sk-test";
     process.env.FIRECRAWL_API_KEY = "fc-test";
+    process.env.VITE_SUPABASE_URL = "https://x.supabase.co";
+    process.env.VITE_SUPABASE_ANON_KEY = "anon-test";
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string, opts?: { body?: string }) => {
         url = String(url);
-        if (url.includes("api.firecrawl.dev")) {
-          return { ok: true, json: async () => ({ success: true, data: { json: { products: [
-            { title: "Vintage Designer Bag", price: 220, imageUrl: "http://i/bag", productUrl: "http://amzn/bag", rating: 4.4, reviewCount: 30, brand: "BrandX" },
-          ] } } }) };
+        if (url.includes("/rest/v1/scraped_products")) {
+          // The scrape cache returns a previously-warmed Amazon row.
+          return { ok: true, json: async () => [
+            { id: "r1", retailer: "Amazon", title: "Vintage Designer Bag", price: 220, image_url: "http://i/bag", product_url: "http://amzn/bag", review_score: 4.4, review_count: 30, brand: "BrandX", scraped_at: new Date().toISOString() },
+          ] };
         }
         // anthropic — pick the first candidate three times
         const userText = JSON.parse(opts!.body!).messages[0].content;

@@ -12,8 +12,15 @@
  *   3. "demo"      — illustrative placeholder (no keys configured).
  */
 
+import { searchKeywords } from "../lib/scrapers";
+
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-6";
+
+// Scraped retailers (Amazon, The RealReal, Nordstrom) are served from the
+// scraped_products cache, which the scrape-warm-background function fills. A
+// fresh cache row must be newer than this to be used.
+const SCRAPE_TTL_MS = 24 * 60 * 60 * 1000;
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -138,15 +145,15 @@ async function fetchCandidates(
   const bestBuyKey = process.env.BESTBUY_API_KEY;
   if (bestBuyKey) jobs.push(fetchBestBuy(query, budgetMax, bestBuyKey));
 
-  // Sites with no usable product API are scraped via Firecrawl. Scraping is
-  // slow + billed, so each is hard-capped (so it can never stall the response)
-  // and relies on Firecrawl's cache for fast, free repeat queries.
-  const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-  if (firecrawlKey) {
-    const cap = Number(process.env.SCRAPE_TIMEOUT_MS) || 8000;
-    jobs.push(withTimeout(fetchAmazon(query, budgetMax, firecrawlKey), cap, []));
-    jobs.push(withTimeout(fetchRealReal(query, budgetMax, firecrawlKey), cap, []));
-    jobs.push(withTimeout(fetchNordstrom(query, budgetMax, firecrawlKey), cap, []));
+  // Scraped retailers (Amazon, The RealReal, Nordstrom) come from the cache the
+  // background function fills — never scraped inline. On a cache miss, kick off
+  // a background warm so the next identical query is served instantly.
+  const supaUrl = process.env.VITE_SUPABASE_URL;
+  const supaAnon = process.env.VITE_SUPABASE_ANON_KEY;
+  if (supaUrl && supaAnon && process.env.FIRECRAWL_API_KEY) {
+    const cached = await readScrapedCache(query, supaUrl, supaAnon);
+    if (cached.length > 0) jobs.push(Promise.resolve(cached));
+    else await triggerScrapeWarm(query);
   }
 
   if (jobs.length === 0) return [];
@@ -226,35 +233,6 @@ async function fetchEbay(query: string, budgetMax: number | undefined, token: st
   );
 }
 
-/**
- * Reduce a natural-language query to its meaningful product words for any
- * retailer's keyword search (Best Buy, Amazon, Nordstrom, The RealReal…). A raw
- * sentence ("a decent rain jacket … under $80, I don't want to think about it")
- * would match on filler words and return noise, so we strip prices, ages, and
- * stop-words and keep the actual product nouns.
- */
-function searchKeywords(query: string): string {
-  const stop = new Set([
-    "a","an","the","for","my","me","i","im","need","needs","want","wants","looking",
-    "look","some","that","this","with","to","of","and","or","is","it","its","under",
-    "below","around","over","about","please","find","get","good","just","dont","really",
-    "think","buy","new","best","cheap","cheapest","quality","reliable","decent","nice",
-  ]);
-  const cleaned = query
-    .toLowerCase()
-    .replace(/['’]/g, "")                                       // "don't" -> "dont"
-    .replace(/\$\s?\d[\d,]*/g, " ")                                  // "$80", "$1,000"
-    .replace(/\b(?:under|below|around|over|less than|up to)\s+\d[\d,]*\b/g, " ")
-    .replace(/\b\d+[- ]?year[- ]?old\b/g, " ")                       // "10-year-old"
-    .replace(/[^a-z0-9\s-]/g, " ")                                   // punctuation
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && !stop.has(w))                     // drop stop-words + stray single chars
-    .slice(0, 6)
-    .join(" ")
-    .trim();
-  return cleaned || query.trim();
-}
-
 async function fetchBestBuy(query: string, budgetMax: number | undefined, apiKey: string): Promise<Product[]> {
   // Request the fields Trine renders, plus regularPrice/image fallbacks.
   const fields =
@@ -283,127 +261,63 @@ async function fetchBestBuy(query: string, budgetMax: number | undefined, apiKey
   );
 }
 
-// ── Firecrawl scrapers (Amazon, The RealReal, Nordstrom) ──────────────────
+// ── Scraped-retailer cache (Amazon, The RealReal, Nordstrom) ──────────────
 //
-// These three retailers have no usable free product-search API, so we extract
-// their search-results pages with Firecrawl's structured-JSON scrape. All three
-// share one credential (FIRECRAWL_API_KEY) and one schema; each adapter only
-// builds the site's search URL and maps the rows.
+// Scraping these sites takes 8-60s — far too slow for a synchronous request —
+// so curate never scrapes inline. Instead the scrape-warm-background function
+// fills the public.scraped_products cache, and here we just read it (fast). On
+// a cache miss we fire that background function so the next identical query is
+// served from cache.
 
-const FIRECRAWL_SCRAPE = "https://api.firecrawl.dev/v2/scrape";
-
-interface ScrapedProduct {
-  title?: string;
-  price?: number;
-  imageUrl?: string;
-  productUrl?: string;
-  rating?: number;
-  reviewCount?: number;
-  brand?: string;
-}
-
-/** Resolve `p`, but give up and resolve to `fallback` after `ms` so a slow
- *  scrape can never blow the serverless function's overall time budget. */
-function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
-  return Promise.race([
-    p.catch(() => fallback),
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
-  ]);
-}
-
-/** Scrape a search-results page and extract product rows via Firecrawl JSON. */
-async function scrapeProducts(searchUrl: string, fcKey: string): Promise<ScrapedProduct[]> {
-  const res = await fetch(FIRECRAWL_SCRAPE, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${fcKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      url: searchUrl,
-      // These retailers run heavy JS behind strong anti-bot. Live testing showed
-      // they only yield results with the enhanced proxy, the full DOM (not just
-      // "main content"), and a short render wait. maxAge serves the cached page
-      // on repeat queries (the page scrape is cached; the JSON extraction still
-      // re-runs, so even a cache hit is a few seconds).
-      onlyMainContent: false,
-      proxy: "enhanced", // anti-bot; up to 5 credits/request
-      maxAge: 86_400_000, // accept a ≤1-day-old cached page
-      waitFor: 3500,
-      timeout: 60_000,
-      location: { country: "US", languages: ["en-US"] },
-      formats: [
-        {
-          type: "json",
-          prompt:
-            "Extract the product listings on this shopping search-results page. " +
-            "Return up to 20 real, purchasable products. For each: title, numeric " +
-            "price in USD (no symbols), absolute image URL, absolute product URL, " +
-            "average star rating (0-5) if shown, review count if shown, and brand if " +
-            "shown. Skip ads, sponsored placeholders, and items without a price.",
-          schema: {
-            type: "object",
-            properties: {
-              products: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    price: { type: "number" },
-                    imageUrl: { type: "string" },
-                    productUrl: { type: "string" },
-                    rating: { type: "number" },
-                    reviewCount: { type: "number" },
-                    brand: { type: "string" },
-                  },
-                  required: ["title", "price", "productUrl"],
-                },
-              },
-            },
-            required: ["products"],
-          },
-        },
-      ],
-    }),
+/** Read fresh cached products for this query from Supabase (PostgREST). */
+async function readScrapedCache(query: string, url: string, anonKey: string): Promise<Product[]> {
+  const key = searchKeywords(query).toLowerCase().trim();
+  const since = new Date(Date.now() - SCRAPE_TTL_MS).toISOString();
+  const qs = new URLSearchParams({
+    query_key: `eq.${key}`,
+    scraped_at: `gte.${since}`,
+    select: "*",
+    order: "scraped_at.desc",
+    limit: "40",
   });
-  if (!res.ok) return [];
-  const data = await res.json();
-  const rows = data?.data?.json?.products;
-  return Array.isArray(rows) ? rows : [];
+  try {
+    const res = await fetch(`${url}/rest/v1/scraped_products?${qs}`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+    });
+    if (!res.ok) return [];
+    const rows = await res.json();
+    return (Array.isArray(rows) ? rows : []).map(
+      (r: Record<string, any>): Product => ({
+        id: `cache-${r.id}`,
+        retailer: r.retailer,
+        title: r.title,
+        price: Number(r.price ?? 0),
+        imageUrl: r.image_url ?? "",
+        productUrl: r.product_url,
+        reviewScore: r.review_score != null ? Number(r.review_score) : null,
+        reviewCount: r.review_count != null ? Number(r.review_count) : null,
+        brand: r.brand ?? null,
+      })
+    );
+  } catch {
+    return [];
+  }
 }
 
-/** Map scraped rows to Trine's Product shape for a given retailer. */
-function toProducts(rows: ScrapedProduct[], retailer: Product["retailer"]): Product[] {
-  const slug = retailer.toLowerCase().replace(/\s+/g, "-");
-  return rows
-    .filter((r) => r.title && r.productUrl && typeof r.price === "number")
-    .map((r, i) => ({
-      id: `${slug}-${i}`,
-      retailer,
-      title: r.title!,
-      price: r.price!,
-      imageUrl: r.imageUrl ?? "",
-      productUrl: r.productUrl!,
-      reviewScore: typeof r.rating === "number" ? r.rating : null,
-      reviewCount: typeof r.reviewCount === "number" ? r.reviewCount : null,
-      brand: r.brand ?? null,
-    }));
-}
-
-function fetchAmazon(query: string, budgetMax: number | undefined, fcKey: string): Promise<Product[]> {
-  const params = new URLSearchParams({ k: searchKeywords(query) });
-  if (budgetMax) params.set("high-price", String(budgetMax)); // Amazon /s price ceiling
-  return scrapeProducts(`https://www.amazon.com/s?${params}`, fcKey).then((r) => toProducts(r, "Amazon"));
-}
-
-function fetchRealReal(query: string, _budgetMax: number | undefined, fcKey: string): Promise<Product[]> {
-  const params = new URLSearchParams({ keywords: searchKeywords(query) });
-  return scrapeProducts(`https://www.therealreal.com/products?${params}`, fcKey).then((r) =>
-    toProducts(r, "The RealReal")
-  );
-}
-
-function fetchNordstrom(query: string, _budgetMax: number | undefined, fcKey: string): Promise<Product[]> {
-  const params = new URLSearchParams({ keyword: searchKeywords(query) });
-  return scrapeProducts(`https://www.nordstrom.com/sr?${params}`, fcKey).then((r) => toProducts(r, "Nordstrom"));
+/** Fire-and-(briefly)-wait trigger for the background scraper, so the next
+ *  identical query is cache-warm. Returns immediately on the 202. */
+async function triggerScrapeWarm(query: string): Promise<void> {
+  const base = process.env.URL || process.env.DEPLOY_PRIME_URL;
+  if (!base) return;
+  try {
+    await fetch(`${base}/.netlify/functions/scrape-warm-background`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+  } catch {
+    /* best effort */
+  }
 }
 
 // ── Claude: rank real products ───────────────────────────────────────────
