@@ -1,4 +1,4 @@
-# Danielle's Diary — Before, During & After Shortlist
+# Danielle's Diary — Before, During & After Trine Shopping AI
 
 *First-person journal entries from the Problem Aware avatar. Focused on the dominant negative emotions: overwhelm, self-directed guilt, and resentment toward the shopping process.*
 

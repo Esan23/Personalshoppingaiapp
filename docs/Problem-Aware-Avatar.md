@@ -1,6 +1,6 @@
-# Shortlist — Problem Aware Avatar
+# Trine Shopping AI — Problem Aware Avatar
 
-> **Offer context (assumptions):** *Shortlist* is an AI-powered shopping-decision app that curates and narrows overwhelming option sets into a confident shortlist of three. Audience: time-strapped working professionals who lose hours to research, comparison, and second-guessing. Freemium, ~$9.99/mo premium. Benefit: reclaim time and decide faster without regret.
+> **Offer context (assumptions):** *Trine Shopping AI* is an AI-powered shopping-decision app that curates and narrows overwhelming option sets into a confident shortlist of three. Audience: time-strapped working professionals who lose hours to research, comparison, and second-guessing. Freemium, ~$9.99/mo premium. Benefit: reclaim time and decide faster without regret.
 
 **Stage of Awareness:** Problem Aware — she feels the *symptom* (lost time, decision exhaustion, purchase regret) but does not yet know a product category exists to solve it. She is not searching "shopping assistant app." She blames the volume of options, the internet, or herself.
 
@@ -103,4 +103,4 @@
 
 Because Danielle is **Problem Aware**, lead with the symptom, not the app. Mirror the pain ("Lost another Saturday to 40 tabs and still bought the wrong thing?") before introducing that a solution category even exists. Naming the product too early skips the awareness step and lowers conversion. Trend tailwind: choice overload, infinite-scroll fatigue, and the "deinfluencing" backlash all signal a market actively *feeling* this problem in 2025–26, even if it hasn't yet gone looking for a fix.
 
-**Grounding (category research, not Shortlist's own performance):** a meta-analysis of ~100 studies found excessive options reduce satisfaction, increase regret, and lower the likelihood of choosing at all; Meta has reported ~42% of users abandon online purchases due to cognitive overload; Baymard puts cart abandonment at ~69.6%.
+**Grounding (category research, not Trine Shopping AI's own performance):** a meta-analysis of ~100 studies found excessive options reduce satisfaction, increase regret, and lower the likelihood of choosing at all; Meta has reported ~42% of users abandon online purchases due to cognitive overload; Baymard puts cart abandonment at ~69.6%.

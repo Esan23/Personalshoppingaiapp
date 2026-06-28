@@ -1,16 +1,16 @@
-# Trine — *your AI shopping shortlist*
+# Trine Shopping AI — *your AI shopping shortlist*
 
-**Trine** turns an overwhelming field of options into three confident, reasoned
-choices. Ask in plain words — *"a rain jacket for a 10-year-old, under $80"* —
+**Trine Shopping AI** turns an overwhelming field of options into three confident,
+reasoned choices. Ask in plain words — *"a rain jacket for a 10-year-old, under $80"* —
 and get three options back, each with a clear reason it made the cut.
 
 This repo holds both the **marketing site** and the **working app**, built to the
 Landing Page PRD and Brand Design System (see [`docs/`](docs/)).
 
-> **Naming:** "Shortlist" was the working placeholder; **Trine** is the chosen
-> brand (see [`docs/Shortlist-Naming-Analysis.md`](docs/Shortlist-Naming-Analysis.md)).
-> Per that analysis, "shortlist" is kept as a lowercase *feature word* (the
-> three-option list), while "Trine" is the product name.
+> **Naming:** The product name is **Trine Shopping AI** (the short wordmark is
+> **Trine**). "shortlist" is kept as a lowercase *feature word* (the three-option
+> list), never the brand — see the
+> [naming analysis](docs/Shortlist-Naming-Analysis.md).
 
 ## Routes
 

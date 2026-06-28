@@ -1,6 +1,6 @@
-# Shortlist — App Naming Analysis & Screening
+# Trine Shopping AI — App Naming Analysis & Screening
 
-**Purpose:** Document the brand-name exploration for the app (working placeholder "Shortlist"), grounded in the Problem Aware avatar, the diary entries, and the Shortlist Brand Identity & Design System. Emphasis: a name that is distinctive, ownable, and signals that **AI is core to the product**.
+**Purpose:** Document the brand-name exploration for the app (working placeholder "Shortlist", since renamed **Trine Shopping AI**), grounded in the Problem Aware avatar, the diary entries, and the Trine Shopping AI Brand Identity & Design System. Emphasis: a name that is distinctive, ownable, and signals that **AI is core to the product**.
 **Date:** June 14, 2026
 **Status:** Finalists identified — pending formal trademark clearance.
 

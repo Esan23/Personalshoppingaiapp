@@ -1,16 +1,16 @@
-# Shortlist — Landing Page PRD (B2C)
+# Trine Shopping AI — Landing Page PRD (B2C)
 
-**Product:** Shortlist — consumer shopping-decision app (iOS, Android, web)
+**Product:** Trine Shopping AI — consumer shopping-decision app (iOS, Android, web)
 **Document:** Landing Page PRD v1.0 · Draft for review
 **Date:** June 13, 2026
 **Owner:** Product / Growth
-**Source of truth:** Problem Aware avatar + Shortlist Brand Identity & Design System
+**Source of truth:** Problem Aware avatar + Trine Shopping AI Brand Identity & Design System
 
 ---
 
 ## 1. Executive Overview
 
-**Purpose.** Specifies the marketing landing page for *Shortlist*, a consumer app that turns an overwhelming field of shopping options into three confident, reasoned choices. The page converts time-strapped, problem-aware visitors into free sign-ups by mirroring their pain, demonstrating tangible time savings, and removing friction.
+**Purpose.** Specifies the marketing landing page for *Trine Shopping AI*, a consumer app that turns an overwhelming field of shopping options into three confident, reasoned choices. The page converts time-strapped, problem-aware visitors into free sign-ups by mirroring their pain, demonstrating tangible time savings, and removing friction.
 
 **Product in one line.** Ask in plain words; get three options back, each with a clear reason it made the cut and who it is not for — so the decision takes minutes instead of an evening.
 
@@ -18,7 +18,7 @@
 
 ### Source PRD translation (B2B → B2C)
 
-| Original B2B element | Shortlist (B2C) equivalent |
+| Original B2B element | Trine Shopping AI (B2C) equivalent |
 |---|---|
 | "Trusted by 500+ sales teams" | "Loved by 12,000+ time-strapped shoppers" |
 | ROI Calculator (reps, deals, ARR) | Time Reclaimed Calculator (decisions → hours & dollars) |
@@ -124,7 +124,7 @@ Twelve sections, top to bottom.
 - Headline: "Three options. One confident answer."
 - Three short paragraphs: pain → approach (ask like you'd ask a friend) → differentiator (a plain reason + who it's not for).
 - Before/After visual ("11:48 p.m. knot" → "decided in four minutes").
-- UVP callout on gradient: "Unlike a search box, Shortlist doesn't show you more — it decides with you, and tells you why."
+- UVP callout on gradient: "Unlike a search box, Trine Shopping AI doesn't show you more — it decides with you, and tells you why."
 
 **5.5 Features & Benefits.** *Purpose:* tie four capabilities to outcomes in an alternating layout.
 - Ask in plain words (one-sentence input, no filters).
@@ -210,7 +210,7 @@ Twelve sections, top to bottom.
 ## 10. Open Assumptions & Risks
 
 - **Performance claims are placeholders.** "31 min saved per decision," "70% time saved," "12,000+ users," "94% second-guess less," "4.8★," "1.4M tabs" must be replaced with measured data or removed — unsubstantiated claims are a credibility and legal/FTC risk.
-- **Choice-overload statistics are real and sourced** (Baymard, Meta, Columbia/Iyengar–Lepper) but cite *category* research, not Shortlist's own performance — frame as context, never as our results.
+- **Choice-overload statistics are real and sourced** (Baymard, Meta, Columbia/Iyengar–Lepper) but cite *category* research, not Trine Shopping AI's own performance — frame as context, never as our results.
 - **Pricing and tier limits are assumptions** pending the monetization model.
 - **Retailer coverage** ("works wherever you shop") must match actual integration scope at launch.
 - **Testimonials are illustrative** and must be replaced with consented, real customer quotes.

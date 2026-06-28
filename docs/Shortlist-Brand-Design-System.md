@@ -1,4 +1,4 @@
-# Shortlist Brand Identity & Design System
+# Trine Shopping AI Brand Identity & Design System
 
 ## Brand Identity (Contribution led by the Brand Strategist)
 
@@ -22,7 +22,7 @@ Distilled from the project overview (an AI-powered shopping-decision app that co
 
 ### Brand Narrative
 
-Every week, capable people lose hours they will never get back — not to big decisions, but to small ones. A booster seat. A rain jacket. A coffee maker. The internet answers "which one?" with ten thousand options, contradictory reviews, and sponsored noise, and a smart, busy professional ends up at midnight with twenty-two tabs open and no answer. Shortlist exists for that person. It listens the way a trusted friend would — *"I need a decent rain jacket for a 10-year-old, under $80, I don't want to think about it"* — and returns three options, each with a plain-language reason it earned its place. No infinite scroll. No rabbit hole. Just a confident answer in minutes and the lightness of moving on. Shortlist isn't a store or a search engine; it's a decision, handled, so its users can spend their attention on the things that actually matter.
+Every week, capable people lose hours they will never get back — not to big decisions, but to small ones. A booster seat. A rain jacket. A coffee maker. The internet answers "which one?" with ten thousand options, contradictory reviews, and sponsored noise, and a smart, busy professional ends up at midnight with twenty-two tabs open and no answer. Trine Shopping AI exists for that person. It listens the way a trusted friend would — *"I need a decent rain jacket for a 10-year-old, under $80, I don't want to think about it"* — and returns three options, each with a plain-language reason it earned its place. No infinite scroll. No rabbit hole. Just a confident answer in minutes and the lightness of moving on. Trine Shopping AI isn't a store or a search engine; it's a decision, handled, so its users can spend their attention on the things that actually matter.
 
 ## Design System (Contribution led by the Lead UI/UX Designer and Lead Front-End Developer)
 
